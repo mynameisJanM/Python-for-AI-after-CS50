@@ -1,0 +1,24 @@
+{
+  "name": "python-for-ai-after-cs50",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mynameisJanM/Python-for-AI-after-CS50.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mynameisJanM/Python-for-AI-after-CS50/issues"
+  },
+  "homepage": "https://github.com/mynameisJanM/Python-for-AI-after-CS50#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node-fetch": "^2.7.0"
+  }
+}

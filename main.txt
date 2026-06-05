@@ -1,0 +1,3 @@
+This program is for analysing and processing stocks and values overtime, the code will be udpated every week for upmost certainty in success. 
+There are many telegram channels that do the data analysis for you, but we need a more practical way to win.
+Let's go!
