@@ -1,66 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Stock Analysis Dashboard</title>
+<title>Stock AI Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefec;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #9a9a96;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --radius: 8px; --radius-lg: 12px;
-    --blue: #378ADD; --red: #E24B4A; --green: #639922; --purple: #7F77DD;
-    --grid: rgba(0,0,0,0.06); --tick: #888;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a; --bg2: #242422; --bg3: #2c2c2a;
-      --text: #f0f0ec; --text2: #9a9a96; --text3: #6b6b67;
-      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.22);
-      --blue: #85B7EB; --red: #F09595; --green: #97C459; --purple: #CDB3F6;
-      --grid: rgba(255,255,255,0.07); --tick: #aaa;
-    }
-  }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; max-width: 1100px; margin: 0 auto; }
-  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
-  .ticker-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
-  .ticker-btn { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--border2); cursor: pointer; background: var(--bg); color: var(--text2); transition: all 0.15s; }
-  .ticker-btn.active { background: #185FA5; border-color: #185FA5; color: #E6F1FB; }
-  .ticker-btn:hover:not(.active) { color: var(--text); border-color: var(--border2); }
-  .period-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; }
-  .period-btn { font-size: 12px; padding: 4px 10px; border-radius: 4px; border: 0.5px solid var(--border); cursor: pointer; background: var(--bg); color: var(--text2); }
-  .period-btn.active { background: var(--bg3); color: var(--text); border-color: var(--border2); }
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
-  @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-  .stat { background: var(--bg2); border-radius: var(--radius); padding: 0.75rem 1rem; }
-  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .stat-value { font-size: 20px; font-weight: 500; color: var(--text); }
-  .stat-value.up { color: #3B6D11; }
-  .stat-value.down { color: #A32D2D; }
-  @media (prefers-color-scheme: dark) {
-    .stat-value.up { color: #97C459; }
-    .stat-value.down { color: #F09595; }
-  }
-  .section-label { font-size: 11px; color: var(--text2); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
-  .legend { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; color: var(--text2); flex-wrap: wrap; }
-  .legend span { display: flex; align-items: center; gap: 6px; }
-  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 1.5rem; }
-  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-  @media (max-width: 600px) { .chart-row { grid-template-columns: 1fr; } }
-  .chart-sub { position: relative; width: 100%; height: 200px; }
-  .loading-overlay { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; background: var(--bg); opacity: 0.85; z-index: 10; font-size: 13px; color: var(--text2); border-radius: var(--radius); }
-  .loading-overlay.show { display: flex; }
-  .error-msg { font-size: 14px; color: var(--red); padding: 2rem; text-align: center; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#efefec;
+  --text:#1a1a18;--text2:#6b6b67;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --radius:8px;--radius-lg:12px;
+  --grid:rgba(0,0,0,0.06);--tick:#888;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;
+  --text:#f0f0ec;--text2:#9a9a96;
+  --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+  --grid:rgba(255,255,255,0.07);--tick:#aaa;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;max-width:1100px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.ticker-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.ticker-btn{font-size:13px;font-weight:500;padding:6px 14px;border-radius:20px;border:0.5px solid var(--border2);cursor:pointer;background:var(--bg);color:var(--text2);transition:all 0.15s}
+.ticker-btn.active{background:#185FA5;border-color:#185FA5;color:#E6F1FB}
+.ticker-btn:hover:not(.active){color:var(--text)}
+.period-bar{display:flex;gap:6px;margin-bottom:1.5rem}
+.period-btn{font-size:12px;padding:4px 10px;border-radius:4px;border:0.5px solid var(--border);cursor:pointer;background:var(--bg);color:var(--text2)}
+.period-btn.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:0.75rem 1rem}
+.stat-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:500;color:var(--text)}
+.stat-value.up{color:#3B6D11}
+.stat-value.down{color:#A32D2D}
+@media(prefers-color-scheme:dark){.stat-value.up{color:#97C459}.stat-value.down{color:#F09595}}
+.ai-panel{background:var(--bg2);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem;border:0.5px solid var(--border)}
+.ai-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.ai-title{font-size:13px;font-weight:500}
+.ai-badge{font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bg3);color:var(--text2)}
+.ai-badge.training{background:#faeeda;color:#854F0B}
+.ai-badge.done{background:#eaf3de;color:#3B6D11}
+@media(prefers-color-scheme:dark){.ai-badge.training{background:#412402;color:#FAC775}.ai-badge.done{background:#173404;color:#97C459}}
+.progress-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:0.5rem}
+.progress-bar{height:100%;width:0%;background:#185FA5;border-radius:2px;transition:width 0.2s}
+.ai-stats{display:flex;gap:1.5rem;font-size:12px;color:var(--text2)}
+.ai-stats span b{color:var(--text);font-weight:500}
+.section-label{font-size:11px;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px}
+.legend{display:flex;gap:16px;margin-bottom:8px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.chart-wrap{position:relative;width:100%;height:320px;margin-bottom:1.5rem}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:600px){.chart-row{grid-template-columns:1fr}}
+.chart-sub{position:relative;width:100%;height:200px}
+.loading-overlay{display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:var(--bg);opacity:0.85;z-index:10;font-size:13px;color:var(--text2);border-radius:var(--radius)}
+.loading-overlay.show{display:flex}
+.error-msg{font-size:14px;color:#E24B4A;padding:2rem;text-align:center}
 </style>
 </head>
 <body>
 
-<h1>Stock Analysis Dashboard</h1>
-<p class="subtitle">Live data · Moving averages · Returns distribution · Trend regression</p>
+<h1>Stock AI Dashboard</h1>
+<p class="subtitle">Live data · LSTM price prediction · Self-learning model</p>
 
 <div class="ticker-bar" id="tickerBar"></div>
 <div class="period-bar" id="periodBar">
@@ -72,106 +77,202 @@
 </div>
 
 <div class="stats-grid">
-  <div class="stat"><div class="stat-label">Price</div><div class="stat-value" id="s-price">—</div></div>
-  <div class="stat"><div class="stat-label">Mean daily return</div><div class="stat-value" id="s-mean">—</div></div>
-  <div class="stat"><div class="stat-label">Volatility (σ)</div><div class="stat-value" id="s-vol">—</div></div>
-  <div class="stat"><div class="stat-label">Trend R²</div><div class="stat-value" id="s-r2">—</div></div>
+  <div class="stat"><div class="stat-label">Current price</div><div class="stat-value" id="s-price">—</div></div>
+  <div class="stat"><div class="stat-label">Predicted (30d)</div><div class="stat-value" id="s-pred">—</div></div>
+  <div class="stat"><div class="stat-label">Predicted change</div><div class="stat-value" id="s-change">—</div></div>
+  <div class="stat"><div class="stat-label">Model loss</div><div class="stat-value" id="s-loss">—</div></div>
+</div>
+
+<div class="ai-panel">
+  <div class="ai-header">
+    <span class="ai-title">LSTM Neural Network</span>
+    <span class="ai-badge" id="aiBadge">Waiting</span>
+  </div>
+  <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="ai-stats">
+    <span>Epoch <b id="epochNum">—</b></span>
+    <span>Loss <b id="lossNum">—</b></span>
+    <span>Lookback <b>30 days</b></span>
+    <span>Forecast <b>30 days</b></span>
+  </div>
 </div>
 
 <div class="legend">
   <span><span style="width:18px;height:2px;background:#378ADD;display:inline-block;"></span>Close</span>
   <span><span style="width:18px;height:0;display:inline-block;border-top:2px dashed #E24B4A;"></span>MA-20</span>
   <span><span style="width:18px;height:0;display:inline-block;border-top:2px dashed #639922;"></span>MA-50</span>
+  <span><span style="width:18px;height:0;display:inline-block;border-top:2px dotted #9B6DFF;"></span>AI Forecast</span>
 </div>
 <div class="chart-wrap">
-  <div class="loading-overlay show" id="priceLoader">Loading…</div>
-  <canvas id="priceChart" role="img" aria-label="Stock price chart with moving averages">Price data loading</canvas>
+  <div class="loading-overlay show" id="priceLoader">Loading data…</div>
+  <canvas id="priceChart" role="img" aria-label="Stock price chart with AI forecast"></canvas>
 </div>
 
 <div class="chart-row">
   <div>
     <p class="section-label">Daily returns distribution</p>
-    <div class="chart-sub">
-      <canvas id="retChart" role="img" aria-label="Daily returns histogram">Returns loading</canvas>
-    </div>
+    <div class="chart-sub"><canvas id="retChart" role="img" aria-label="Returns histogram"></canvas></div>
   </div>
   <div>
     <p class="section-label">Volume</p>
-    <div class="chart-sub">
-      <canvas id="volChart" role="img" aria-label="Trading volume over time">Volume loading</canvas>
-    </div>
+    <div class="chart-sub"><canvas id="volChart" role="img" aria-label="Volume chart"></canvas></div>
   </div>
 </div>
 
 <script>
 const TICKERS = ["AAPL","MSFT","GOOGL","TSLA","AMZN","KLAC","SLV","FCX","SCCO"];
-const PERIOD_DAYS = { "1mo": 21, "3mo": 63, "1y": 252, "2y": 504, "5y": 1260 };
+const PERIOD_DAYS = {"1mo":21,"3mo":63,"1y":252,"2y":504,"5y":1260};
+const LOOKBACK = 30;
+const FORECAST = 30;
+const EPOCHS = 40;
 
 let activeTicker = "AAPL";
 let activePeriod = "1y";
 let chartPrice, chartRet, chartVol;
 let cache = {};
+let currentModel = null;
+let trainingAborted = false;
 
 function ma(arr, n) {
-  return arr.map((_, i) => i < n - 1 ? null : arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0) / n);
+  return arr.map((_, i) => i < n-1 ? null : arr.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n);
 }
 
-function linreg(y) {
-  const n = y.length, mx = (n - 1) / 2;
-  const my = y.reduce((a, b) => a + b, 0) / n;
-  let num = 0, den = 0;
-  y.forEach((yi, i) => { num += (i - mx) * (yi - my); den += (i - mx) ** 2; });
-  const slope = num / den;
-  const pred = y.map((_, i) => slope * (i - mx) + my);
-  const ssTot = y.reduce((a, b) => a + (b - my) ** 2, 0);
-  const ssRes = y.reduce((a, b, i) => a + (b - pred[i]) ** 2, 0);
-  return { slope, r2: 1 - ssRes / ssTot };
+function normalize(arr) {
+  const mn = Math.min(...arr), mx = Math.max(...arr);
+  return { norm: arr.map(v => (v-mn)/(mx-mn)), min: mn, max: mx };
 }
+
+function denormalize(v, mn, mx) { return v*(mx-mn)+mn; }
 
 function getColors() {
   const dark = matchMedia("(prefers-color-scheme: dark)").matches;
   return dark
-    ? { price: "#85B7EB", ma20: "#F09595", ma50: "#97C459", vol: "#0C447C", ret: "#CDB3F6", grid: "rgba(255,255,255,0.07)", tick: "#aaa" }
-    : { price: "#378ADD", ma20: "#E24B4A", ma50: "#639922", vol: "#B5D4F4", ret: "#7F77DD", grid: "rgba(0,0,0,0.06)", tick: "#888" };
+    ? {price:"#85B7EB",ma20:"#F09595",ma50:"#97C459",vol:"#0C447C",ret:"#CDB3F6",pred:"#C4B0FF",grid:"rgba(255,255,255,0.07)",tick:"#aaa"}
+    : {price:"#378ADD",ma20:"#E24B4A",ma50:"#639922",vol:"#B5D4F4",ret:"#7F77DD",pred:"#9B6DFF",grid:"rgba(0,0,0,0.06)",tick:"#888"};
 }
 
-function buildCharts(dates, closes, volumes) {
+function setBadge(state) {
+  const b = document.getElementById("aiBadge");
+  b.textContent = state === "training" ? "Training…" : state === "done" ? "Prediction ready" : state === "error" ? "Error" : "Waiting";
+  b.className = "ai-badge " + (state === "training" ? "training" : state === "done" ? "done" : "");
+}
+
+async function buildAndTrainModel(closes) {
+  trainingAborted = false;
+  if (currentModel) { currentModel.dispose(); currentModel = null; }
+
+  // Dynamically shrink lookback if not enough data
+  const effectiveLookback = Math.min(LOOKBACK, Math.floor(closes.length / 3));
+  if (effectiveLookback < 5) throw new Error(`Not enough data to train (${closes.length} points). Try a longer period.`);
+
+  const { norm, min, max } = normalize(closes);
+
+  // Build sequences
+  const xs = [], ys = [];
+  for (let i = effectiveLookback; i < norm.length; i++) {
+    xs.push(norm.slice(i - effectiveLookback, i));
+    ys.push(norm[i]);
+  }
+
+  const xTensor = tf.tensor3d(xs, [xs.length, effectiveLookback, 1]);
+  const yTensor = tf.tensor2d(ys, [ys.length, 1]);
+
+  // LSTM model
+  const model = tf.sequential();
+  model.add(tf.layers.lstm({ units: 64, inputShape: [effectiveLookback, 1], returnSequences: false }));
+  model.add(tf.layers.dropout({ rate: 0.2 }));
+  model.add(tf.layers.dense({ units: 32, activation: "relu" }));
+  model.add(tf.layers.dense({ units: 1 }));
+  model.compile({ optimizer: tf.train.adam(0.001), loss: "meanSquaredError" });
+
+  setBadge("training");
+  document.getElementById("progressBar").style.width = "0%";
+
+  await model.fit(xTensor, yTensor, {
+    epochs: EPOCHS,
+    batchSize: 16,
+    shuffle: true,
+    callbacks: {
+      onEpochEnd: async (epoch, logs) => {
+        if (trainingAborted) { model.stopTraining = true; return; }
+        const pct = Math.round(((epoch+1)/EPOCHS)*100);
+        document.getElementById("progressBar").style.width = pct + "%";
+        document.getElementById("epochNum").textContent = (epoch+1) + "/" + EPOCHS;
+        document.getElementById("lossNum").textContent = logs.loss.toFixed(5);
+        document.getElementById("s-loss").textContent = logs.loss.toFixed(5);
+        await tf.nextFrame();
+      }
+    }
+  });
+
+  xTensor.dispose(); yTensor.dispose();
+  currentModel = model;
+  return { model, min, max, norm, effectiveLookback };
+}
+
+async function forecastPrices(model, norm, min, max, effectiveLookback) {
+  let seq = norm.slice(-effectiveLookback);
+  const predictions = [];
+  for (let i = 0; i < FORECAST; i++) {
+    const input = tf.tensor3d([seq], [1, LOOKBACK, 1]);
+    const pred = model.predict(input);
+    const val = (await pred.data())[0];
+    input.dispose(); pred.dispose();
+    predictions.push(denormalize(val, min, max));
+    seq = [...seq.slice(1), val];
+  }
+  return predictions;
+}
+
+function buildCharts(dates, closes, volumes, predictions) {
   const c = getColors();
   const ma20 = ma(closes, 20);
   const ma50 = ma(closes, 50);
-  const retVals = closes.map((v, i) => i === 0 ? null : ((v - closes[i-1]) / closes[i-1]) * 100).filter(Boolean);
+  const retVals = closes.map((v,i) => i===0 ? null : ((v-closes[i-1])/closes[i-1])*100).filter(Boolean);
 
-  const { r2 } = linreg(closes);
-  const meanRet = retVals.reduce((a, b) => a + b, 0) / retVals.length;
-  const stdRet = Math.sqrt(retVals.map(r => (r - meanRet) ** 2).reduce((a, b) => a + b, 0) / retVals.length);
+  // Extend labels for forecast
+  const lastDate = new Date();
+  const forecastLabels = Array.from({length: FORECAST}, (_, i) => {
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() + i + 1);
+    return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
+  });
 
-  document.getElementById("s-price").textContent = "$" + closes[closes.length - 1].toFixed(2);
-  const mr = document.getElementById("s-mean");
-  mr.textContent = (meanRet >= 0 ? "+" : "") + meanRet.toFixed(3) + "%";
-  mr.className = "stat-value " + (meanRet >= 0 ? "up" : "down");
-  document.getElementById("s-vol").textContent = stdRet.toFixed(3) + "%";
-  document.getElementById("s-r2").textContent = r2.toFixed(4);
+  const allLabels = [...dates, ...forecastLabels];
+  const closePadded = [...closes, ...Array(FORECAST).fill(null)];
+  const ma20Padded = [...ma20, ...Array(FORECAST).fill(null)];
+  const ma50Padded = [...ma50, ...Array(FORECAST).fill(null)];
 
-  const base = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } } };
+  // Forecast line: last real price + predictions
+  const forecastLine = [...Array(closes.length - 1).fill(null), closes[closes.length-1], ...predictions];
+
+  const base = {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } }
+  };
 
   if (chartPrice) chartPrice.destroy();
   chartPrice = new Chart(document.getElementById("priceChart"), {
     type: "line",
-    data: { labels: dates, datasets: [
-      { label: "Close", data: closes, borderColor: c.price, borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false },
-      { label: "MA-20", data: ma20, borderColor: c.ma20, borderWidth: 1, borderDash: [4,2], pointRadius: 0, fill: false },
-      { label: "MA-50", data: ma50, borderColor: c.ma50, borderWidth: 1, borderDash: [6,3], pointRadius: 0, fill: false }
-    ]},
+    data: {
+      labels: allLabels,
+      datasets: [
+        { label: "Close", data: closePadded, borderColor: c.price, borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false },
+        { label: "MA-20", data: ma20Padded, borderColor: c.ma20, borderWidth: 1, borderDash: [4,2], pointRadius: 0, fill: false },
+        { label: "MA-50", data: ma50Padded, borderColor: c.ma50, borderWidth: 1, borderDash: [6,3], pointRadius: 0, fill: false },
+        { label: "AI Forecast", data: forecastLine, borderColor: c.pred, borderWidth: 2, borderDash: [3,3], pointRadius: 0, fill: false }
+      ]
+    },
     options: { ...base, scales: {
-      x: { ticks: { maxTicksLimit: 8, color: c.tick, font: { size: 11 } }, grid: { color: c.grid } },
-      y: { ticks: { color: c.tick, font: { size: 11 }, callback: v => "$" + v.toFixed(0) }, grid: { color: c.grid } }
+      x: { ticks: { maxTicksLimit: 10, color: c.tick, font: { size: 11 } }, grid: { color: c.grid } },
+      y: { ticks: { color: c.tick, font: { size: 11 }, callback: v => "$"+v.toFixed(0) }, grid: { color: c.grid } }
     }}
   });
 
-  const bins = 40, mn = Math.min(...retVals), mx = Math.max(...retVals), step = (mx - mn) / bins;
+  const bins = 40, mn = Math.min(...retVals), mx = Math.max(...retVals), step = (mx-mn)/bins;
   const buckets = Array(bins).fill(0);
-  const bLabels = Array.from({ length: bins }, (_, i) => (mn + i * step).toFixed(2));
-  retVals.forEach(r => { buckets[Math.min(bins - 1, Math.floor((r - mn) / step))]++; });
+  const bLabels = Array.from({length:bins},(_,i)=>(mn+i*step).toFixed(2));
+  retVals.forEach(r => { buckets[Math.min(bins-1,Math.floor((r-mn)/step))]++; });
 
   if (chartRet) chartRet.destroy();
   chartRet = new Chart(document.getElementById("retChart"), {
@@ -189,41 +290,74 @@ function buildCharts(dates, closes, volumes) {
     data: { labels: dates, datasets: [{ data: volumes, backgroundColor: c.vol, borderWidth: 0 }] },
     options: { ...base, scales: {
       x: { ticks: { maxTicksLimit: 6, color: c.tick, font: { size: 10 } }, grid: { display: false } },
-      y: { ticks: { color: c.tick, font: { size: 10 }, callback: v => (v / 1e6).toFixed(0) + "M" }, grid: { color: c.grid } }
+      y: { ticks: { color: c.tick, font: { size: 10 }, callback: v => (v/1e6).toFixed(0)+"M" }, grid: { color: c.grid } }
     }}
   });
 }
 
 async function loadData() {
+  trainingAborted = true;
   document.getElementById("priceLoader").classList.add("show");
+  setBadge("waiting");
+  document.getElementById("progressBar").style.width = "0%";
+  document.getElementById("epochNum").textContent = "—";
+  document.getElementById("lossNum").textContent = "—";
+
   const key = `${activeTicker}_${activePeriod}`;
+  let dates, closes, volumes;
+
   if (cache[key]) {
-    document.getElementById("priceLoader").classList.remove("show");
-    buildCharts(cache[key].dates, cache[key].closes, cache[key].volumes);
-    return;
+    ({ dates, closes, volumes } = cache[key]);
+  } else {
+    const days = PERIOD_DAYS[activePeriod];
+    const now = Math.floor(Date.now()/1000);
+    const from = now - days*86400;
+    const url = `/api/stock/${activeTicker}?period1=${from}&period2=${now}&interval=1d`;
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
+      const result = json.chart.result[0];
+      closes = result.indicators.quote[0].close;
+      volumes = result.indicators.quote[0].volume;
+      dates = result.timestamp.map(t => {
+        const d = new Date(t*1000);
+        return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
+      });
+      cache[key] = { dates, closes, volumes };
+    } catch(e) {
+      document.getElementById("priceLoader").classList.remove("show");
+      document.querySelector(".chart-wrap").innerHTML = `<div class="error-msg">Failed to load ${activeTicker}.<br><small>${e.message}</small></div>`;
+      return;
+    }
   }
 
-  const days = PERIOD_DAYS[activePeriod];
-  const now = Math.floor(Date.now() / 1000);
-  const from = now - days * 86400;
-  const url = `/api/stock/${activeTicker}?period1=${from}&period2=${now}&interval=1d`;
+  document.getElementById("s-price").textContent = "$" + closes[closes.length-1].toFixed(2);
+  document.getElementById("priceLoader").classList.remove("show");
 
+  // Draw chart first with no predictions
+  buildCharts(dates, closes, volumes, []);
+
+  // Then train
   try {
-    const res = await fetch(url);
-    const json = await res.json();
-    const result = json.chart.result[0];
-    const closes = result.indicators.quote[0].close;
-    const volumes = result.indicators.quote[0].volume;
-    const dates = result.timestamp.map(t => {
-      const d = new Date(t * 1000);
-      return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
-    });
-    cache[key] = { dates, closes, volumes };
-    document.getElementById("priceLoader").classList.remove("show");
-    buildCharts(dates, closes, volumes);
-  } catch (e) {
-    document.getElementById("priceLoader").classList.remove("show");
-    document.querySelector(".chart-wrap").innerHTML = `<div class="error-msg">Failed to load ${activeTicker}. Make sure the server is running.<br><small>${e.message}</small></div>`;
+    const { model, min, max, norm, effectiveLookback } = await buildAndTrainModel(closes);
+    if (trainingAborted) return;
+    const predictions = await forecastPrices(model, norm, min, max, effectiveLookback);
+    if (trainingAborted) return;
+
+    const predPrice = predictions[predictions.length-1];
+    const currentPrice = closes[closes.length-1];
+    const change = ((predPrice - currentPrice) / currentPrice) * 100;
+
+    document.getElementById("s-pred").textContent = "$" + predPrice.toFixed(2);
+    const chEl = document.getElementById("s-change");
+    chEl.textContent = (change >= 0 ? "+" : "") + change.toFixed(2) + "%";
+    chEl.className = "stat-value " + (change >= 0 ? "up" : "down");
+
+    setBadge("done");
+    buildCharts(dates, closes, volumes, predictions);
+  } catch(e) {
+    setBadge("error");
+    console.error(e);
   }
 }
 
