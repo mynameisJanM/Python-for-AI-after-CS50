@@ -170,15 +170,15 @@ async function buildAndTrainModel(closes) {
 
   const { norm, min, max } = normalize(closes);
 
-  // Build sequences
+  // Build sequences — each timestep wrapped as [value] for shape [samples, timesteps, 1]
   const xs = [], ys = [];
   for (let i = effectiveLookback; i < norm.length; i++) {
-    xs.push(norm.slice(i - effectiveLookback, i));
-    ys.push(norm[i]);
+    xs.push(norm.slice(i - effectiveLookback, i).map(v => [v]));
+    ys.push([norm[i]]);
   }
 
-  const xTensor = tf.tensor3d(xs, [xs.length, effectiveLookback, 1]);
-  const yTensor = tf.tensor2d(ys, [ys.length, 1]);
+  const xTensor = tf.tensor3d(xs);
+  const yTensor = tf.tensor2d(ys);
 
   // LSTM model
   const model = tf.sequential();
