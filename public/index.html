@@ -217,7 +217,7 @@ async function forecastPrices(model, norm, min, max, effectiveLookback) {
   let seq = norm.slice(-effectiveLookback);
   const predictions = [];
   for (let i = 0; i < FORECAST; i++) {
-    const input = tf.tensor3d([seq], [1, LOOKBACK, 1]);
+    const input = tf.tensor3d([seq.map(v => [v])]);
     const pred = model.predict(input);
     const val = (await pred.data())[0];
     input.dispose(); pred.dispose();
