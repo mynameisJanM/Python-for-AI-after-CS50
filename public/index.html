@@ -161,6 +161,9 @@ async function buildAndTrainModel(closes) {
   trainingAborted = false;
   if (currentModel) { currentModel.dispose(); currentModel = null; }
 
+  // Filter out nulls (missing trading days from Yahoo Finance)
+  closes = closes.filter(v => v !== null && v !== undefined && !isNaN(v));
+
   // Dynamically shrink lookback if not enough data
   const effectiveLookback = Math.min(LOOKBACK, Math.floor(closes.length / 3));
   if (effectiveLookback < 5) throw new Error(`Not enough data to train (${closes.length} points). Try a longer period.`);
@@ -317,12 +320,13 @@ async function loadData() {
       const res = await fetch(url);
       const json = await res.json();
       const result = json.chart.result[0];
-      closes = result.indicators.quote[0].close;
-      volumes = result.indicators.quote[0].volume;
-      dates = result.timestamp.map(t => {
-        const d = new Date(t*1000);
-        return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
-      });
+      const rawC = result.indicators.quote[0].close;
+      const rawV = result.indicators.quote[0].volume;
+      const rawT = result.timestamp;
+      const valid = rawC.map((v,i) => (v !== null && v !== undefined && !isNaN(v)) ? i : -1).filter(i => i !== -1);
+      closes = valid.map(i => rawC[i]);
+      volumes = valid.map(i => rawV[i] || 0);
+      dates = valid.map(i => { const d = new Date(rawT[i]*1000); return (d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2); });
       cache[key] = { dates, closes, volumes };
     } catch(e) {
       document.getElementById("priceLoader").classList.remove("show");
