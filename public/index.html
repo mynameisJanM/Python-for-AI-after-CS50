@@ -122,9 +122,9 @@ h1{font-size:22px;font-weight:500;margin-bottom:4px}
 <script>
 const TICKERS = ["AAPL","MSFT","GOOGL","TSLA","AMZN","KLAC","SLV","FCX","SCCO"];
 const PERIOD_DAYS = {"1mo":21,"3mo":63,"1y":252,"2y":504,"5y":1260};
-const LOOKBACK = 30;
+const LOOKBACK = 60;
 const FORECAST = 30;
-const EPOCHS = 40;
+const EPOCHS = 80;
 
 let activeTicker = "AAPL";
 let activePeriod = "1y";
@@ -182,11 +182,13 @@ async function buildAndTrainModel(closes) {
 
   // LSTM model
   const model = tf.sequential();
-  model.add(tf.layers.lstm({ units: 64, inputShape: [effectiveLookback, 1], returnSequences: false }));
+  model.add(tf.layers.lstm({ units: 128, inputShape: [effectiveLookback, 1], returnSequences: true }));
   model.add(tf.layers.dropout({ rate: 0.2 }));
+  model.add(tf.layers.lstm({ units: 64, returnSequences: false }));
+  model.add(tf.layers.dropout({ rate: 0.1 }));
   model.add(tf.layers.dense({ units: 32, activation: "relu" }));
   model.add(tf.layers.dense({ units: 1 }));
-  model.compile({ optimizer: tf.train.adam(0.001), loss: "meanSquaredError" });
+  model.compile({ optimizer: tf.train.adam(0.0005), loss: "meanSquaredError" });
 
   setBadge("training");
   document.getElementById("progressBar").style.width = "0%";
